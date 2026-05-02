@@ -9,3 +9,12 @@ rustflags = ["-C", "link-arg=/STACK:8388608", "-C", "link-arg=/arm64hazardfree"]
 
 [target.'cfg(all(windows, target_env = "gnu"))']
 rustflags = ["-C", "link-arg=-Wl,--stack,8388608"]
+
+# Android ARM64 target for Termux / cross-compilation.
+# In Termux the native Rust toolchain (pkg install rust) targets this triple
+# directly, so no explicit linker override is needed when building on-device.
+# When cross-compiling from a Linux/macOS host, set:
+#   ANDROID_NDK_ROOT and OPENSSL_DIR / OPENSSL_LIB_DIR / OPENSSL_INCLUDE_DIR
+# before invoking cargo.
+[target.aarch64-linux-android]
+linker = "aarch64-linux-android-clang"

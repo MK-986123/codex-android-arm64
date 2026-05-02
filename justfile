@@ -117,3 +117,20 @@ argument-comment-lint-from-source *args:
 # Tail logs from the state SQLite database
 log *args:
     if [ "${1:-}" = "--" ]; then shift; fi; cargo run -p codex-state --bin logs_client -- "$@"
+
+# ── Termux / Android ARM64 ───────────────────────────────────────────────────
+
+# Bootstrap Termux environment (run once after Termux install)
+[no-cd]
+termux-bootstrap:
+    {{ justfile_directory() }}/scripts/termux-bootstrap.sh
+
+# Build the TUI binary for the current Termux host (aarch64-linux-android)
+[no-cd]
+termux-build:
+    cd {{ justfile_directory() }}/codex-rs && cargo build --release -p codex-cli
+
+# Install the TUI binary into $PREFIX/bin (run inside Termux)
+[no-cd]
+termux-install:
+    install -Dm755 {{ justfile_directory() }}/codex-rs/target/release/codex $PREFIX/bin/codex

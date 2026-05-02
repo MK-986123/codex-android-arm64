@@ -58,3 +58,69 @@ You can also use Codex with an API key, but this requires [additional setup](htt
 - [**Open source fund**](./docs/open-source-fund.md)
 
 This repository is licensed under the [Apache-2.0 License](LICENSE).
+
+---
+
+## Android / Termux (ARM64)
+
+Codex TUI runs natively on Android ARM64 via [Termux](https://termux.dev/).
+
+### Prerequisites
+
+Install Termux from [F-Droid](https://f-droid.org/packages/com.termux/) (recommended) or Google Play.
+
+### One-line Bootstrap
+
+Run once inside Termux after installation:
+
+```sh
+bash scripts/termux-bootstrap.sh
+```
+
+This installs all required packages, builds the Rust TUI binary, and places `codex` in `$PREFIX/bin`.
+
+### Manual Steps
+
+```sh
+# 1. Install system dependencies
+pkg update && pkg install -y rust clang openssl-dev pkg-config nodejs-lts pnpm ripgrep git
+
+# 2. Set env vars (add to ~/.bashrc for persistence)
+export OPENSSL_DIR=$PREFIX
+export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+export OPENSSL_NO_VENDOR=1
+
+# 3. Build the TUI
+cd codex-rs
+cargo build --release -p codex-tui
+
+# 4. Install binary
+install -Dm755 target/release/codex $PREFIX/bin/codex
+
+# 5. Install TypeScript CLI (optional)
+cd ../codex-cli
+pnpm install
+pnpm run build
+```
+
+Or use the just targets (requires `pkg install just`):
+
+```sh
+just termux-bootstrap   # first-time setup
+just termux-build       # rebuild
+just termux-install     # copy binary to $PREFIX/bin
+```
+
+### Known Limitations
+
+| Feature | Status |
+|---------|--------|
+| TUI / chat | ✅ Fully functional |
+| Shell execution | ✅ Runs via Termux `$SHELL` |
+| Clipboard | ✅ Termux clipboard API used automatically |
+| Sandboxing (bwrap/landlock) | ⚠️ Disabled — not available on Android |
+| Voice / audio | ⚠️ Disabled — no NDK audio in Termux |
+| IDE integration (IPC) | ✅ Works via Unix sockets |
+
+Audio and sandboxing features compile as no-ops on Android — the binary functions
+fully for all text-based agent tasks.

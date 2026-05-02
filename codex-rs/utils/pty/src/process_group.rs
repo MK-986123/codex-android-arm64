@@ -19,11 +19,12 @@ use std::io;
 
 use tokio::process::Child;
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 /// Ensure the child receives SIGTERM when the original parent dies.
 ///
 /// This should run in `pre_exec` and uses `parent_pid` captured before spawn to
 /// avoid a race where the parent exits between fork and exec.
+/// Android Bionic supports `prctl(PR_SET_PDEATHSIG)` like Linux.
 pub fn set_parent_death_signal(parent_pid: libc::pid_t) -> io::Result<()> {
     if unsafe { libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM) } == -1 {
         return Err(io::Error::last_os_error());
@@ -38,8 +39,8 @@ pub fn set_parent_death_signal(parent_pid: libc::pid_t) -> io::Result<()> {
     Ok(())
 }
 
-#[cfg(not(target_os = "linux"))]
-/// No-op on non-Linux platforms.
+#[cfg(not(any(target_os = "linux", target_os = "android")))]
+/// No-op on non-Linux/Android platforms.
 pub fn set_parent_death_signal(_parent_pid: i32) -> io::Result<()> {
     Ok(())
 }
