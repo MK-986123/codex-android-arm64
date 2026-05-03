@@ -7,10 +7,30 @@ use super::*;
 
 impl App {
     pub(super) fn open_url_in_browser(&mut self, url: String) {
-        if let Err(err) = webbrowser::open(&url) {
-            self.chat_widget
-                .add_error_message(format!("Failed to open browser for {url}: {err}"));
-            return;
+        match codex_utils_path::browser_open_target() {
+            codex_utils_path::BrowserOpenTarget::DefaultBrowser => {
+                if let Err(err) = webbrowser::open(&url) {
+                    self.chat_widget
+                        .add_error_message(format!("Failed to open browser for {url}: {err}"));
+                    return;
+                }
+            }
+            codex_utils_path::BrowserOpenTarget::Command(opener) => {
+                if let Err(err) = codex_utils_path::run_url_opener(opener, &url) {
+                    self.chat_widget.add_error_message(format!(
+                        "Failed to open browser for {url} with {}: {err}",
+                        opener.command()
+                    ));
+                    return;
+                }
+            }
+            codex_utils_path::BrowserOpenTarget::PrintUrl => {
+                self.chat_widget.add_info_message(
+                    format!("Open this URL manually in Termux: {url}"),
+                    /*hint*/ None,
+                );
+                return;
+            }
         }
 
         self.chat_widget
