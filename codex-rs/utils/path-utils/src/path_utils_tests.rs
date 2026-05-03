@@ -151,10 +151,7 @@ mod android_termux {
     #[test]
     fn keeps_default_browser_behavior_on_linux() {
         let target = browser_open_target_with_env(
-            /*is_android_target*/ false,
-            None,
-            None,
-            /*has_termux_open_url*/ false,
+            /*is_android_target*/ false, None, None, /*has_termux_open_url*/ false,
             /*has_xdg_open*/ true,
         );
 
@@ -167,6 +164,7 @@ mod android_termux {
         let tmpdir = temp_home.path().join("tmpdir");
         let resolved = termux_temp_dir_with_env(
             /*is_android_target*/ true,
+            Some(OsStr::new("0.118.0")),
             Some(tmpdir.as_os_str()),
             Some(OsStr::new("/data/data/com.termux/files/usr")),
             Some(temp_home.path()),
@@ -187,6 +185,7 @@ mod android_termux {
 
         let resolved = termux_temp_dir_with_env(
             /*is_android_target*/ true,
+            Some(OsStr::new("0.118.0")),
             Some(unwritable_file.as_os_str()),
             Some(prefix.as_os_str()),
             Some(temp_home.path()),
@@ -202,6 +201,7 @@ mod android_termux {
     fn leaves_linux_temp_dir_unchanged() -> std::io::Result<()> {
         let resolved = termux_temp_dir_with_env(
             /*is_android_target*/ false,
+            None,
             None,
             None,
             None,

@@ -493,7 +493,9 @@ impl OauthLoginFlow {
                             "Authorize `{server_name}` by opening this URL in your browser:\n{auth_url}\n"
                         );
                     }
-                    eprintln!("(No browser opener is available in Termux; please copy the URL above manually.)");
+                    eprintln!(
+                        "(No browser opener is available in Termux; please copy the URL above manually.)"
+                    );
                     Ok(())
                 }
             };

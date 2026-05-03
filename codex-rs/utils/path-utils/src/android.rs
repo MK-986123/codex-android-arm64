@@ -36,7 +36,11 @@ pub enum BrowserOpenTarget {
 pub fn is_android_termux() -> bool {
     let termux_version = std::env::var_os("TERMUX_VERSION");
     let prefix = std::env::var_os("PREFIX");
-    is_android_termux_with_env(cfg!(target_os = "android"), termux_version.as_deref(), prefix.as_deref())
+    is_android_termux_with_env(
+        cfg!(target_os = "android"),
+        termux_version.as_deref(),
+        prefix.as_deref(),
+    )
 }
 
 pub fn is_android_termux_with_env(
@@ -96,10 +100,12 @@ pub fn run_url_opener(opener: UrlOpener, url: &str) -> io::Result<()> {
 
 pub fn termux_temp_dir() -> io::Result<PathBuf> {
     let tmpdir = std::env::var_os("TMPDIR");
+    let termux_version = std::env::var_os("TERMUX_VERSION");
     let prefix = std::env::var_os("PREFIX");
     let home = dirs::home_dir();
     termux_temp_dir_with_env(
         cfg!(target_os = "android"),
+        termux_version.as_deref(),
         tmpdir.as_deref(),
         prefix.as_deref(),
         home.as_deref(),
@@ -109,12 +115,13 @@ pub fn termux_temp_dir() -> io::Result<PathBuf> {
 
 pub fn termux_temp_dir_with_env(
     is_android_target: bool,
+    termux_version: Option<&OsStr>,
     tmpdir: Option<&OsStr>,
     prefix: Option<&OsStr>,
     home: Option<&Path>,
     default_temp_dir: PathBuf,
 ) -> io::Result<PathBuf> {
-    if !is_android_termux_with_env(is_android_target, /*termux_version*/ None, prefix) {
+    if !is_android_termux_with_env(is_android_target, termux_version, prefix) {
         return Ok(default_temp_dir);
     }
 
