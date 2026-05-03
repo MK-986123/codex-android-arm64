@@ -111,8 +111,24 @@ where
 
 #[cfg(not(target_os = "windows"))]
 const UNIX_CORE_ENV_VARS: &[&str] = &[
-    "PATH", "SHELL", "TMPDIR", "TEMP", "TMP", "HOME", "LANG", "LC_ALL", "LC_CTYPE", "LOGNAME",
+    "PATH",
+    "SHELL",
+    "TMPDIR",
+    "TEMP",
+    "TMP",
+    "HOME",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
     "USER",
+    // Termux (Android) environment — essential for subprocess PATH and library resolution.
+    // $PREFIX is the Termux root (/data/data/com.termux/files/usr); many Termux binaries
+    // read it at startup and use it to locate their own configs and libraries.
+    "PREFIX",
+    "TERMUX_VERSION",
+    "TERMUX__PREFIX",
+    "LD_LIBRARY_PATH",
 ];
 
 #[cfg(target_os = "windows")]

@@ -10,11 +10,25 @@ rustflags = ["-C", "link-arg=/STACK:8388608", "-C", "link-arg=/arm64hazardfree"]
 [target.'cfg(all(windows, target_env = "gnu"))']
 rustflags = ["-C", "link-arg=-Wl,--stack,8388608"]
 
-# Android ARM64 target for Termux / cross-compilation.
-# In Termux the native Rust toolchain (pkg install rust) targets this triple
-# directly, so no explicit linker override is needed when building on-device.
-# When cross-compiling from a Linux/macOS host, set:
-#   ANDROID_NDK_ROOT and OPENSSL_DIR / OPENSSL_LIB_DIR / OPENSSL_INCLUDE_DIR
-# before invoking cargo.
+# Android ARM64 target — used for native Termux builds.
+#
+# NATIVE TERMUX BUILD (on device, `pkg install rust`):
+#   Termux's `clang` package ships `aarch64-linux-android-clang` wrapper scripts
+#   in $PREFIX/bin (via ndk-sysroot dependency), so this linker is available
+#   automatically after `pkg install rust`. No extra setup needed.
+#
+# CROSS-COMPILATION (Linux/macOS host → Android):
+#   The NDK uses an API-level-suffixed binary name, e.g. aarch64-linux-android28-clang.
+#   Override the linker via environment variable instead of changing this file:
+#
+#     export ANDROID_NDK_ROOT=/path/to/ndk
+#     export API=28
+#     export NDK_TOOLCHAIN="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin"
+#     export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$NDK_TOOLCHAIN/aarch64-linux-android${API}-clang"
+#     export PATH="$NDK_TOOLCHAIN:$PATH"
+#     export OPENSSL_DIR=/path/to/android-openssl
+#     export OPENSSL_LIB_DIR=$OPENSSL_DIR/lib
+#     export OPENSSL_INCLUDE_DIR=$OPENSSL_DIR/include
+#     cargo build --release --target aarch64-linux-android --bin codex
 [target.aarch64-linux-android]
 linker = "aarch64-linux-android-clang"
