@@ -27,7 +27,11 @@ impl App {
             codex_utils_path::BrowserOpenTarget::PrintUrl => {
                 self.chat_widget.add_info_message(
                     format!("Open this URL manually in Termux: {url}"),
-                    /*hint*/ None,
+                    /*hint*/
+                    Some(
+                        "Copy the URL or run `termux-open-url <url>` after installing Termux:API."
+                            .to_string(),
+                    ),
                 );
                 return;
             }
