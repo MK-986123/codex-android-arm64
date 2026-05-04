@@ -1,6 +1,8 @@
 mod description;
 mod response;
+#[cfg_attr(target_os = "android", path = "runtime_android.rs")]
 mod runtime;
+#[cfg_attr(target_os = "android", path = "service_android.rs")]
 mod service;
 
 pub use description::CODE_MODE_PRAGMA_PREFIX;
