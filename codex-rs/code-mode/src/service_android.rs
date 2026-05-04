@@ -14,7 +14,7 @@ use crate::runtime::RuntimeResponse;
 use crate::runtime::WaitOutcome;
 use crate::runtime::WaitRequest;
 
-const ANDROID_UNAVAILABLE_MESSAGE: &str = "code mode is unavailable on Android Termux builds because V8 is not bundled for aarch64-linux-android";
+const ANDROID_UNAVAILABLE_MESSAGE: &str = "code mode is unavailable on Android Termux builds because V8 is not bundled for aarch64-linux-android; use non-code-mode flows on Termux or run code mode on a desktop platform";
 
 #[async_trait]
 pub trait CodeModeTurnHost: Send + Sync {
