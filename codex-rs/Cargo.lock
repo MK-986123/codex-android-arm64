@@ -2950,6 +2950,7 @@ dependencies = [
  "codex-otel",
  "codex-protocol",
  "codex-terminal-detection",
+ "codex-utils-path",
  "codex-utils-template",
  "core_test_support",
  "jsonwebtoken",
@@ -3342,6 +3343,7 @@ dependencies = [
  "codex-protocol",
  "codex-utils-cargo-bin",
  "codex-utils-home-dir",
+ "codex-utils-path",
  "codex-utils-pty",
  "futures",
  "keyring",
@@ -3831,9 +3833,11 @@ name = "codex-utils-path"
 version = "0.0.0"
 dependencies = [
  "codex-utils-absolute-path",
+ "dirs",
  "dunce",
  "pretty_assertions",
  "tempfile",
+ "which 8.0.0",
 ]
 
 [[package]]

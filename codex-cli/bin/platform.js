@@ -8,7 +8,13 @@ export const PLATFORM_PACKAGE_BY_TARGET = {
   "aarch64-pc-windows-msvc": "@openai/codex-win32-arm64",
 };
 
-export function detectTargetTriple(platform, arch) {
+const TERMUX_PREFIX = "/data/data/com.termux/files/usr";
+
+function isTermuxEnvironment(env) {
+  return Boolean(env.TERMUX_VERSION) || env.PREFIX === TERMUX_PREFIX;
+}
+
+export function detectTargetTriple(platform, arch, env = process.env) {
   switch (platform) {
     case "android":
       if (arch === "arm64") {
@@ -16,6 +22,9 @@ export function detectTargetTriple(platform, arch) {
       }
       return null;
     case "linux":
+      if (arch === "arm64" && isTermuxEnvironment(env)) {
+        return "aarch64-linux-android";
+      }
       if (arch === "x64") {
         return "x86_64-unknown-linux-musl";
       }

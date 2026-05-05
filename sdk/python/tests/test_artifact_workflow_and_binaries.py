@@ -223,6 +223,32 @@ def test_runtime_setup_uses_pep440_package_version_and_codex_release_tags() -> N
     assert runtime_setup._release_tag("0.116.0a1") == "rust-v0.116.0-alpha.1"
 
 
+def test_runtime_setup_uses_android_asset_for_termux_arm64(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime_setup = _load_runtime_setup_module()
+
+    monkeypatch.setattr(runtime_setup.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(runtime_setup.platform, "machine", lambda: "aarch64")
+    monkeypatch.setenv("PREFIX", runtime_setup.TERMUX_PREFIX)
+    monkeypatch.delenv("TERMUX_VERSION", raising=False)
+
+    assert runtime_setup.platform_asset_name() == "codex-aarch64-linux-android.tar.gz"
+
+
+def test_runtime_setup_preserves_linux_arm64_asset_off_termux(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime_setup = _load_runtime_setup_module()
+
+    monkeypatch.setattr(runtime_setup.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(runtime_setup.platform, "machine", lambda: "aarch64")
+    monkeypatch.delenv("PREFIX", raising=False)
+    monkeypatch.delenv("TERMUX_VERSION", raising=False)
+
+    assert runtime_setup.platform_asset_name() == "codex-aarch64-unknown-linux-musl.tar.gz"
+
+
 def test_runtime_package_is_wheel_only_and_builds_platform_specific_wheels() -> None:
     pyproject = tomllib.loads(
         (ROOT.parent / "python-runtime" / "pyproject.toml").read_text()

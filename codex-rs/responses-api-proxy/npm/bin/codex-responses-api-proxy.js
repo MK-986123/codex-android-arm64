@@ -7,11 +7,19 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const TERMUX_PREFIX = "/data/data/com.termux/files/usr";
 
-function determineTargetTriple(platform, arch) {
+function isTermuxEnvironment(env) {
+  return Boolean(env.TERMUX_VERSION) || env.PREFIX === TERMUX_PREFIX;
+}
+
+function determineTargetTriple(platform, arch, env = process.env) {
+  if (platform === "android" || (platform === "linux" && isTermuxEnvironment(env))) {
+    return arch === "arm64" ? "aarch64-linux-android" : null;
+  }
+
   switch (platform) {
     case "linux":
-    case "android":
       if (arch === "x64") {
         return "x86_64-unknown-linux-musl";
       }
@@ -41,7 +49,7 @@ function determineTargetTriple(platform, arch) {
   return null;
 }
 
-const targetTriple = determineTargetTriple(process.platform, process.arch);
+const targetTriple = determineTargetTriple(process.platform, process.arch, process.env);
 if (!targetTriple) {
   throw new Error(
     `Unsupported platform: ${process.platform} (${process.arch})`,

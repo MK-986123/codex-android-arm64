@@ -1,10 +1,10 @@
 import { spawn } from "node:child_process";
+import { createRequire } from "node:module";
 import path from "node:path";
 import readline from "node:readline";
-import { createRequire } from "node:module";
 
 import type { CodexConfigObject, CodexConfigValue } from "./codexOptions";
-import { SandboxMode, ModelReasoningEffort, ApprovalMode, WebSearchMode } from "./threadOptions";
+import { ApprovalMode, ModelReasoningEffort, SandboxMode, WebSearchMode } from "./threadOptions";
 
 export type CodexExecArgs = {
   input: string;
@@ -42,10 +42,12 @@ export type CodexExecArgs = {
 const INTERNAL_ORIGINATOR_ENV = "CODEX_INTERNAL_ORIGINATOR_OVERRIDE";
 const TYPESCRIPT_SDK_ORIGINATOR = "codex_sdk_ts";
 const CODEX_NPM_NAME = "@openai/codex";
+const TERMUX_PREFIX = "/data/data/com.termux/files/usr";
 
 const PLATFORM_PACKAGE_BY_TARGET: Record<string, string> = {
   "x86_64-unknown-linux-musl": "@openai/codex-linux-x64",
   "aarch64-unknown-linux-musl": "@openai/codex-linux-arm64",
+  "aarch64-linux-android": "@openai/codex-android-arm64",
   "x86_64-apple-darwin": "@openai/codex-darwin-x64",
   "aarch64-apple-darwin": "@openai/codex-darwin-arm64",
   "x86_64-pc-windows-msvc": "@openai/codex-win32-x64",
@@ -314,51 +316,55 @@ function isPlainObject(value: unknown): value is CodexConfigObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function findCodexPath() {
-  const { platform, arch } = process;
+function isTermuxEnvironment(env: NodeJS.ProcessEnv): boolean {
+  return !!env.TERMUX_VERSION || env.PREFIX === TERMUX_PREFIX;
+}
 
-  let targetTriple = null;
+export function determineTargetTriple(
+  platform: NodeJS.Platform | "android",
+  arch: string,
+  env: NodeJS.ProcessEnv = process.env,
+): string | null {
+  if (platform === "android" || (platform === "linux" && isTermuxEnvironment(env))) {
+    return arch === "arm64" ? "aarch64-linux-android" : null;
+  }
+
   switch (platform) {
     case "linux":
-    case "android":
       switch (arch) {
         case "x64":
-          targetTriple = "x86_64-unknown-linux-musl";
-          break;
+          return "x86_64-unknown-linux-musl";
         case "arm64":
-          targetTriple = "aarch64-unknown-linux-musl";
-          break;
+          return "aarch64-unknown-linux-musl";
         default:
-          break;
+          return null;
       }
-      break;
     case "darwin":
       switch (arch) {
         case "x64":
-          targetTriple = "x86_64-apple-darwin";
-          break;
+          return "x86_64-apple-darwin";
         case "arm64":
-          targetTriple = "aarch64-apple-darwin";
-          break;
+          return "aarch64-apple-darwin";
         default:
-          break;
+          return null;
       }
-      break;
     case "win32":
       switch (arch) {
         case "x64":
-          targetTriple = "x86_64-pc-windows-msvc";
-          break;
+          return "x86_64-pc-windows-msvc";
         case "arm64":
-          targetTriple = "aarch64-pc-windows-msvc";
-          break;
+          return "aarch64-pc-windows-msvc";
         default:
-          break;
+          return null;
       }
-      break;
     default:
-      break;
+      return null;
   }
+}
+
+function findCodexPath() {
+  const { platform, arch } = process;
+  const targetTriple = determineTargetTriple(platform, arch, process.env);
 
   if (!targetTriple) {
     throw new Error(`Unsupported platform: ${platform} (${arch})`);

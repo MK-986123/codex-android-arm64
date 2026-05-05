@@ -20,10 +20,16 @@ from pathlib import Path
 PACKAGE_NAME = "openai-codex-cli-bin"
 SDK_PACKAGE_NAME = "openai-codex-app-server-sdk"
 REPO_SLUG = "openai/codex"
+TERMUX_PREFIX = "/data/data/com.termux/files/usr"
 
 
 class RuntimeSetupError(RuntimeError):
     pass
+
+
+def _is_termux_environment() -> bool:
+    termux_version = os.environ.get("TERMUX_VERSION")
+    return bool(termux_version) or os.environ.get("PREFIX") == TERMUX_PREFIX
 
 
 def pinned_runtime_version() -> str:
@@ -97,6 +103,8 @@ def platform_asset_name() -> str:
             return "codex-x86_64-apple-darwin.tar.gz"
     elif system == "linux":
         if machine in {"aarch64", "arm64"}:
+            if _is_termux_environment():
+                return "codex-aarch64-linux-android.tar.gz"
             return "codex-aarch64-unknown-linux-musl.tar.gz"
         if machine in {"x86_64", "amd64"}:
             return "codex-x86_64-unknown-linux-musl.tar.gz"
