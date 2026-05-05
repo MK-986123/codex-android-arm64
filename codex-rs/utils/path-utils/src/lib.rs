@@ -1,6 +1,16 @@
 //! Path normalization, symlink resolution, and atomic writes shared across Codex crates.
 
+pub mod android;
 pub(crate) mod env;
+pub use android::BrowserOpenTarget;
+pub use android::UrlOpener;
+pub use android::browser_open_target;
+pub use android::browser_open_target_with_env;
+pub use android::is_android_termux;
+pub use android::is_android_termux_with_env;
+pub use android::run_url_opener;
+pub use android::termux_temp_dir;
+pub use android::termux_temp_dir_with_env;
 pub use env::is_wsl;
 
 use codex_utils_absolute_path::AbsolutePathBuf;

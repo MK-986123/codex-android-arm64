@@ -79,6 +79,140 @@ mod native_workdir {
     }
 }
 
+mod android_termux {
+    use super::super::BrowserOpenTarget;
+    use super::super::UrlOpener;
+    use super::super::browser_open_target_with_env;
+    use super::super::is_android_termux_with_env;
+    use super::super::termux_temp_dir_with_env;
+    use pretty_assertions::assert_eq;
+    use std::ffi::OsStr;
+    use std::fs;
+    use std::path::Path;
+    use std::path::PathBuf;
+
+    #[test]
+    fn detects_termux_on_android_from_termux_version() {
+        assert!(is_android_termux_with_env(
+            /*is_android_target*/ true,
+            Some(OsStr::new("0.118.0")),
+            None,
+        ));
+    }
+
+    #[test]
+    fn does_not_detect_termux_on_linux() {
+        assert!(!is_android_termux_with_env(
+            /*is_android_target*/ false,
+            Some(OsStr::new("0.118.0")),
+            Some(OsStr::new("/data/data/com.termux/files/usr")),
+        ));
+    }
+
+    #[test]
+    fn prefers_termux_open_url_on_android() {
+        let target = browser_open_target_with_env(
+            /*is_android_target*/ true,
+            Some(OsStr::new("0.118.0")),
+            Some(OsStr::new("/data/data/com.termux/files/usr")),
+            /*has_termux_open_url*/ true,
+            /*has_xdg_open*/ true,
+        );
+
+        assert_eq!(target, BrowserOpenTarget::Command(UrlOpener::TermuxOpenUrl));
+    }
+
+    #[test]
+    fn falls_back_to_xdg_open_on_android() {
+        let target = browser_open_target_with_env(
+            /*is_android_target*/ true,
+            Some(OsStr::new("0.118.0")),
+            Some(OsStr::new("/data/data/com.termux/files/usr")),
+            /*has_termux_open_url*/ false,
+            /*has_xdg_open*/ true,
+        );
+
+        assert_eq!(target, BrowserOpenTarget::Command(UrlOpener::XdgOpen));
+    }
+
+    #[test]
+    fn prints_url_when_no_android_opener_exists() {
+        let target = browser_open_target_with_env(
+            /*is_android_target*/ true,
+            Some(OsStr::new("0.118.0")),
+            Some(OsStr::new("/data/data/com.termux/files/usr")),
+            /*has_termux_open_url*/ false,
+            /*has_xdg_open*/ false,
+        );
+
+        assert_eq!(target, BrowserOpenTarget::PrintUrl);
+    }
+
+    #[test]
+    fn keeps_default_browser_behavior_on_linux() {
+        let target = browser_open_target_with_env(
+            /*is_android_target*/ false, None, None, /*has_termux_open_url*/ false,
+            /*has_xdg_open*/ true,
+        );
+
+        assert_eq!(target, BrowserOpenTarget::DefaultBrowser);
+    }
+
+    #[test]
+    fn prefers_tmpdir_when_writable() -> std::io::Result<()> {
+        let temp_home = tempfile::tempdir()?;
+        let tmpdir = temp_home.path().join("tmpdir");
+        let resolved = termux_temp_dir_with_env(
+            /*is_android_target*/ true,
+            Some(OsStr::new("0.118.0")),
+            Some(tmpdir.as_os_str()),
+            Some(OsStr::new("/data/data/com.termux/files/usr")),
+            Some(temp_home.path()),
+            PathBuf::from("/tmp/unchanged"),
+        )?;
+
+        assert_eq!(resolved, tmpdir);
+        Ok(())
+    }
+
+    #[test]
+    fn falls_back_to_home_cache_when_termux_tmp_is_unusable() -> std::io::Result<()> {
+        let temp_home = tempfile::tempdir()?;
+        let unwritable_file = temp_home.path().join("tmp-file");
+        fs::write(&unwritable_file, "not-a-directory")?;
+        let prefix = temp_home.path().join("prefix");
+        fs::write(prefix.as_path(), "also-not-a-directory")?;
+
+        let resolved = termux_temp_dir_with_env(
+            /*is_android_target*/ true,
+            Some(OsStr::new("0.118.0")),
+            Some(unwritable_file.as_os_str()),
+            Some(prefix.as_os_str()),
+            Some(temp_home.path()),
+            PathBuf::from("/tmp/unchanged"),
+        )?;
+
+        assert_eq!(resolved, temp_home.path().join(".cache/codex/tmp"));
+        assert!(Path::new(&resolved).is_dir());
+        Ok(())
+    }
+
+    #[test]
+    fn leaves_linux_temp_dir_unchanged() -> std::io::Result<()> {
+        let resolved = termux_temp_dir_with_env(
+            /*is_android_target*/ false,
+            None,
+            None,
+            None,
+            None,
+            PathBuf::from("/tmp/linux"),
+        )?;
+
+        assert_eq!(resolved, PathBuf::from("/tmp/linux"));
+        Ok(())
+    }
+}
+
 mod path_comparison {
     use super::super::paths_match_after_normalization;
     use std::path::PathBuf;
