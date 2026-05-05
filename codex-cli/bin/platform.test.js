@@ -1,11 +1,20 @@
-import test from "node:test";
 import assert from "node:assert/strict";
+import test from "node:test";
 
 import { detectTargetTriple, getPlatformPackage } from "./platform.js";
 
 test("detects Android Termux arm64 target triple", () => {
   assert.equal(detectTargetTriple("android", "arm64"), "aarch64-linux-android");
   assert.equal(getPlatformPackage("aarch64-linux-android"), "@openai/codex-android-arm64");
+});
+
+test("detects Termux arm64 target triple when Node reports linux", () => {
+  assert.equal(
+    detectTargetTriple("linux", "arm64", {
+      PREFIX: "/data/data/com.termux/files/usr",
+    }),
+    "aarch64-linux-android",
+  );
 });
 
 test("keeps Linux target selection unchanged", () => {

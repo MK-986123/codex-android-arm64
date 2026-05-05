@@ -57,10 +57,21 @@ pub fn is_android_termux_with_env(
 }
 
 pub fn browser_open_target() -> BrowserOpenTarget {
-    browser_open_target_with_env(
+    let termux_version = std::env::var_os("TERMUX_VERSION");
+    let prefix = std::env::var_os("PREFIX");
+
+    if !is_android_termux_with_env(
         cfg!(target_os = "android"),
-        std::env::var_os("TERMUX_VERSION").as_deref(),
-        std::env::var_os("PREFIX").as_deref(),
+        termux_version.as_deref(),
+        prefix.as_deref(),
+    ) {
+        return BrowserOpenTarget::DefaultBrowser;
+    }
+
+    browser_open_target_with_env(
+        /*is_android_target*/ true,
+        termux_version.as_deref(),
+        prefix.as_deref(),
         command_exists(UrlOpener::TermuxOpenUrl.command()),
         command_exists(UrlOpener::XdgOpen.command()),
     )

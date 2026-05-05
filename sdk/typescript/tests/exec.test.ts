@@ -41,6 +41,18 @@ function createEarlyExitChild(exitCode = 2): FakeChildProcess {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe("CodexExec", () => {
+  it("resolves Android arm64 targets for Termux and native Android", async () => {
+    const { determineTargetTriple } = await import("../src/exec");
+
+    expect(determineTargetTriple("android", "arm64", {})).toBe("aarch64-linux-android");
+    expect(
+      determineTargetTriple("linux", "arm64", {
+        PREFIX: "/data/data/com.termux/files/usr",
+      }),
+    ).toBe("aarch64-linux-android");
+    expect(determineTargetTriple("linux", "arm64", {})).toBe("aarch64-unknown-linux-musl");
+  });
+
   it("rejects when exit happens before stdout closes", async () => {
     const { CodexExec } = await import("../src/exec");
     const child = createEarlyExitChild();
