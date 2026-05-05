@@ -4,6 +4,8 @@ set -eu
 
 RELEASE="latest"
 
+BIN_DIR="${CODEX_INSTALL_DIR:-$HOME/.local/bin}"
+BIN_PATH="$BIN_DIR/codex"
 CODEX_HOME_DIR="${CODEX_HOME:-$HOME/.codex}"
 STANDALONE_ROOT="$CODEX_HOME_DIR/packages/standalone"
 RELEASES_DIR="$STANDALONE_ROOT/releases"
@@ -11,9 +13,6 @@ CURRENT_LINK="$STANDALONE_ROOT/current"
 LOCK_FILE="$STANDALONE_ROOT/install.lock"
 LOCK_DIR="$STANDALONE_ROOT/install.lock.d"
 LOCK_STALE_AFTER_SECS=600
-TERMUX_PREFIX_DEFAULT="/data/data/com.termux/files/usr"
-TERMUX_TMP_DEFAULT="/data/data/com.termux/files/usr/tmp"
-TERMUX_HOME_CACHE_TMP_SUFFIX=".cache/codex/tmp"
 
 path_action="already"
 path_profile=""
@@ -21,9 +20,6 @@ conflict_manager=""
 conflict_path=""
 lock_kind=""
 tmp_dir=""
-is_termux_android=0
-BIN_DIR=""
-BIN_PATH=""
 
 step() {
   printf '==> %s\n' "$1"
@@ -31,74 +27,6 @@ step() {
 
 warn() {
   printf 'WARNING: %s\n' "$1" >&2
-}
-
-is_writable_dir() {
-  dir_path="$1"
-
-  if ! mkdir -p "$dir_path" 2>/dev/null; then
-    return 1
-  fi
-
-  probe="$dir_path/.codex-write-test-$$"
-  if ! ( : >"$probe" ) 2>/dev/null; then
-    return 1
-  fi
-
-  rm -f "$probe"
-  return 0
-}
-
-detect_termux_android() {
-  if [ -n "${TERMUX_VERSION:-}" ]; then
-    return 0
-  fi
-
-  if [ -z "${PREFIX:-}" ]; then
-    return 1
-  fi
-
-  prefix="$PREFIX"
-  case "$prefix" in
-    "$TERMUX_PREFIX_DEFAULT"|"$TERMUX_PREFIX_DEFAULT"/*)
-      return 0
-      ;;
-  esac
-
-  return 1
-}
-
-resolve_temp_dir() {
-  prefix="${PREFIX:-$TERMUX_PREFIX_DEFAULT}"
-  home_cache_tmp="${HOME}/${TERMUX_HOME_CACHE_TMP_SUFFIX}"
-
-  for candidate in \
-    "${TMPDIR:-}" \
-    "$prefix/tmp" \
-    "$TERMUX_TMP_DEFAULT" \
-    "$home_cache_tmp"
-  do
-    if [ -n "$candidate" ] && is_writable_dir "$candidate"; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-  done
-
-  echo "Could not find a writable temporary directory for Android Termux. Tried TMPDIR, $prefix/tmp, $TERMUX_TMP_DEFAULT, and $home_cache_tmp." >&2
-  exit 1
-}
-
-resolve_bin_dir() {
-  if [ -n "${CODEX_INSTALL_DIR:-}" ]; then
-    printf '%s\n' "$CODEX_INSTALL_DIR"
-    return
-  fi
-
-  if [ "$is_termux_android" -eq 1 ]; then
-    printf '%s\n' "${PREFIX:-$TERMUX_PREFIX_DEFAULT}/bin"
-  else
-    printf '%s\n' "$HOME/.local/bin"
-  fi
 }
 
 normalize_version() {
@@ -231,14 +159,7 @@ release_asset_digest() {
       printf '%s\n' "${digest#sha256:}"
       ;;
     *)
-      case "$asset" in
-        codex-npm-android-arm64-*)
-          echo "Android ARM64 standalone update artifacts are not available for Codex $resolved_version. Self-update cannot continue safely on Termux." >&2
-          ;;
-        *)
-          echo "Could not find SHA-256 digest for release asset $asset." >&2
-          ;;
-      esac
+      echo "Could not find SHA-256 digest for release asset $asset." >&2
       exit 1
       ;;
   esac
@@ -314,12 +235,6 @@ pick_profile() {
       ;;
     darwin:*/bash)
       printf '%s\n' "$HOME/.bash_profile"
-      ;;
-    android:*/bash)
-      printf '%s\n' "$HOME/.bashrc"
-      ;;
-    android:*/zsh)
-      printf '%s\n' "$HOME/.zshrc"
       ;;
     linux:*/zsh)
       printf '%s\n' "$HOME/.zshrc"
@@ -676,14 +591,11 @@ install_release() {
 
   mkdir -p "$RELEASES_DIR"
   rm -rf "$stage_release"
-  mkdir -p "$stage_release"
+  mkdir -p "$stage_release/codex-resources"
   cp "$vendor_root/codex/codex" "$stage_release/codex"
+  cp "$vendor_root/path/rg" "$stage_release/codex-resources/rg"
   chmod 0755 "$stage_release/codex"
-  if [ -f "$vendor_root/path/rg" ]; then
-    mkdir -p "$stage_release/codex-resources"
-    cp "$vendor_root/path/rg" "$stage_release/codex-resources/rg"
-    chmod 0755 "$stage_release/codex-resources/rg"
-  fi
+  chmod 0755 "$stage_release/codex-resources/rg"
 
   if [ -e "$release_dir" ] || [ -L "$release_dir" ]; then
     rm -rf "$release_dir"
@@ -698,7 +610,7 @@ release_dir_is_complete() {
 
   [ -d "$release_dir" ] &&
     [ -x "$release_dir/codex" ] &&
-    { [ "$expected_target" = "aarch64-linux-android" ] || [ -x "$release_dir/codex-resources/rg" ]; } &&
+    [ -x "$release_dir/codex-resources/rg" ] &&
     [ "$(basename "$release_dir")" = "$expected_version-$expected_target" ]
 }
 
@@ -722,31 +634,21 @@ verify_visible_command() {
 
 parse_args "$@"
 
+require_command mktemp
 require_command tar
-
-if detect_termux_android; then
-  is_termux_android=1
-fi
 
 case "$(uname -s)" in
   Darwin)
     os="darwin"
     ;;
   Linux)
-    if [ "$is_termux_android" -eq 1 ]; then
-      os="android"
-    else
-      os="linux"
-    fi
+    os="linux"
     ;;
   *)
-    echo "install.sh supports macOS, Linux, and Android Termux. Use install.ps1 on Windows." >&2
+    echo "install.sh supports macOS and Linux. Use install.ps1 on Windows." >&2
     exit 1
     ;;
 esac
-
-BIN_DIR="$(resolve_bin_dir)"
-BIN_PATH="$BIN_DIR/codex"
 
 case "$(uname -m)" in
   x86_64 | amd64)
@@ -776,15 +678,6 @@ if [ "$os" = "darwin" ]; then
     npm_tag="darwin-x64"
     vendor_target="x86_64-apple-darwin"
     platform_label="macOS (Intel)"
-  fi
-elif [ "$os" = "android" ]; then
-  if [ "$arch" = "aarch64" ]; then
-    npm_tag="android-arm64"
-    vendor_target="aarch64-linux-android"
-    platform_label="Android Termux (ARM64)"
-  else
-    echo "Unsupported Android architecture: $arch" >&2
-    exit 1
   fi
 else
   if [ "$arch" = "aarch64" ]; then
@@ -817,10 +710,6 @@ step "Resolved version: $resolved_version"
 
 detect_conflicting_install
 
-if [ "$is_termux_android" -eq 1 ]; then
-  export TMPDIR="$(resolve_temp_dir)"
-fi
-require_command mktemp
 tmp_dir="$(mktemp -d)"
 cleanup() {
   release_install_lock

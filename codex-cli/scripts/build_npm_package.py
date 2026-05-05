@@ -33,13 +33,6 @@ CODEX_PLATFORM_PACKAGES: dict[str, dict[str, str]] = {
         "os": "linux",
         "cpu": "arm64",
     },
-    "codex-android-arm64": {
-        "npm_name": "@openai/codex-android-arm64",
-        "npm_tag": "android-arm64",
-        "target_triple": "aarch64-linux-android",
-        "os": "android",
-        "cpu": "arm64",
-    },
     "codex-darwin-x64": {
         "npm_name": "@openai/codex-darwin-x64",
         "npm_tag": "darwin-x64",
@@ -78,7 +71,6 @@ PACKAGE_NATIVE_COMPONENTS: dict[str, list[str]] = {
     "codex": [],
     "codex-linux-x64": ["codex", "rg"],
     "codex-linux-arm64": ["codex", "rg"],
-    "codex-android-arm64": ["codex"],
     "codex-darwin-x64": ["codex", "rg"],
     "codex-darwin-arm64": ["codex", "rg"],
     "codex-win32-x64": ["codex", "rg", "codex-windows-sandbox-setup", "codex-command-runner"],

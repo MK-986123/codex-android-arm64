@@ -209,9 +209,6 @@ fn get_zsh_shell(path: Option<&PathBuf>) -> Option<Shell> {
     })
 }
 
-#[cfg(target_os = "android")]
-const BASH_FALLBACK_PATHS: &[&str] = &["/data/data/com.termux/files/usr/bin/bash", "/bin/bash"];
-#[cfg(not(target_os = "android"))]
 const BASH_FALLBACK_PATHS: &[&str] = &["/bin/bash"];
 
 fn get_bash_shell(path: Option<&PathBuf>) -> Option<Shell> {
@@ -224,9 +221,6 @@ fn get_bash_shell(path: Option<&PathBuf>) -> Option<Shell> {
     })
 }
 
-#[cfg(target_os = "android")]
-const SH_FALLBACK_PATHS: &[&str] = &["/data/data/com.termux/files/usr/bin/sh", "/bin/sh"];
-#[cfg(not(target_os = "android"))]
 const SH_FALLBACK_PATHS: &[&str] = &["/bin/sh"];
 
 fn get_sh_shell(path: Option<&PathBuf>) -> Option<Shell> {
@@ -293,11 +287,7 @@ fn ultimate_fallback_shell() -> Shell {
     } else {
         Shell {
             shell_type: ShellType::Sh,
-            shell_path: if cfg!(target_os = "android") {
-                PathBuf::from("/data/data/com.termux/files/usr/bin/sh")
-            } else {
-                PathBuf::from("/bin/sh")
-            },
+            shell_path: PathBuf::from("/bin/sh"),
             shell_snapshot: empty_shell_snapshot_receiver(),
         }
     }

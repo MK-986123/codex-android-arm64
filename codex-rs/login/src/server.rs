@@ -161,15 +161,7 @@ pub fn run_login_server(opts: ServerOptions) -> io::Result<LoginServer> {
     );
 
     if opts.open_browser {
-        match codex_utils_path::browser_open_target() {
-            codex_utils_path::BrowserOpenTarget::DefaultBrowser => {
-                let _ = webbrowser::open(&auth_url);
-            }
-            codex_utils_path::BrowserOpenTarget::Command(opener) => {
-                let _ = codex_utils_path::run_url_opener(opener, &auth_url);
-            }
-            codex_utils_path::BrowserOpenTarget::PrintUrl => {}
-        }
+        let _ = webbrowser::open(&auth_url);
     }
 
     // Map blocking reads from server.recv() to an async channel.

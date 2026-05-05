@@ -242,20 +242,6 @@ fn image_generation_requires_feature_and_supported_model() {
 }
 
 #[test]
-fn code_mode_is_disabled_on_android_even_when_feature_is_enabled() {
-    assert!(!code_mode_enabled_for_platform(
-        /*features_enabled*/ true, /*is_android_target*/ true,
-    ));
-}
-
-#[test]
-fn code_mode_stays_enabled_off_android_when_feature_is_enabled() {
-    assert!(code_mode_enabled_for_platform(
-        /*features_enabled*/ true, /*is_android_target*/ false,
-    ));
-}
-
-#[test]
 fn provider_capability_methods_disable_provider_bound_tool_surfaces() {
     let model_info = model_info();
     let features = Features::with_defaults();
