@@ -480,7 +480,27 @@ impl OauthLoginFlow {
                 );
             }
 
-            if webbrowser::open(auth_url).is_err() {
+            let browser_opened = match codex_utils_path::browser_open_target() {
+                codex_utils_path::BrowserOpenTarget::DefaultBrowser => webbrowser::open(auth_url)
+                    .map(|_| ())
+                    .map_err(anyhow::Error::from),
+                codex_utils_path::BrowserOpenTarget::Command(opener) => {
+                    codex_utils_path::run_url_opener(opener, auth_url).map_err(anyhow::Error::from)
+                }
+                codex_utils_path::BrowserOpenTarget::PrintUrl => {
+                    if !emit_browser_url {
+                        eprintln!(
+                            "Authorize `{server_name}` by opening this URL in your browser:\n{auth_url}\n"
+                        );
+                    }
+                    eprintln!(
+                        "(No browser opener is available in Termux; please copy the URL above manually.)"
+                    );
+                    Ok(())
+                }
+            };
+
+            if browser_opened.is_err() {
                 if !emit_browser_url {
                     eprintln!(
                         "Authorize `{server_name}` by opening this URL in your browser:\n{auth_url}\n"

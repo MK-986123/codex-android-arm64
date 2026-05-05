@@ -116,6 +116,12 @@ jobs:
             artifact_name: aarch64-unknown-linux-musl-app-server
             binaries: "codex-app-server"
             build_dmg: "false"
+          - runner: ubuntu-24.04
+            target: aarch64-linux-android
+            bundle: primary
+            artifact_name: aarch64-linux-android
+            binaries: "codex codex-responses-api-proxy"
+            build_dmg: "false"
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -255,6 +261,26 @@ jobs:
         with:
           target: ${{ matrix.target }}
 
+      - if: ${{ matrix.target == 'aarch64-linux-android' }}
+        name: Setup Android NDK
+        id: android-ndk
+        uses: nttld/setup-ndk@31d5c69f6f4d0d4df5f4f81cf8e579e6b9269f78 # v1.5.0
+        with:
+          ndk-version: r28b
+
+      - if: ${{ matrix.target == 'aarch64-linux-android' }}
+        name: Configure Android toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          toolchain="${{ steps.android-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          api_level=28
+          echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=${toolchain}/aarch64-linux-android${api_level}-clang" >> "$GITHUB_ENV"
+          echo "CC_aarch64_linux_android=${toolchain}/aarch64-linux-android${api_level}-clang" >> "$GITHUB_ENV"
+          echo "CXX_aarch64_linux_android=${toolchain}/aarch64-linux-android${api_level}-clang++" >> "$GITHUB_ENV"
+          echo "AR_aarch64_linux_android=${toolchain}/llvm-ar" >> "$GITHUB_ENV"
+          echo "RANLIB_aarch64_linux_android=${toolchain}/llvm-ranlib" >> "$GITHUB_ENV"
+
       - name: Cargo build
         shell: bash
         run: |
@@ -272,7 +298,7 @@ jobs:
           path: codex-rs/target/**/cargo-timings/cargo-timing.html
           if-no-files-found: warn
 
-      - if: ${{ contains(matrix.target, 'linux') }}
+      - if: ${{ matrix.target == 'x86_64-unknown-linux-musl' || matrix.target == 'aarch64-unknown-linux-musl' }}
         name: Cosign Linux artifacts
         uses: ./.github/actions/linux-code-sign
         with:
@@ -355,7 +381,7 @@ jobs:
 
           for binary in ${{ matrix.binaries }}; do
             cp "target/${{ matrix.target }}/release/${binary}" "$dest/${binary}-${{ matrix.target }}"
-            if [[ "${{ matrix.target }}" == *linux* ]]; then
+            if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-musl" || "${{ matrix.target }}" == "aarch64-unknown-linux-musl" ]]; then
               cp "target/${{ matrix.target }}/release/${binary}.sigstore" \
                 "$dest/${binary}-${{ matrix.target }}.sigstore"
             fi

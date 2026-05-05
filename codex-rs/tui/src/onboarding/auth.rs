@@ -1005,8 +1005,20 @@ pub(super) fn maybe_open_auth_url_in_browser(request_handle: &AppServerRequestHa
         return;
     }
 
-    if let Err(err) = webbrowser::open(url) {
-        tracing::warn!("failed to open browser for login URL: {err}");
+    match codex_utils_path::browser_open_target() {
+        codex_utils_path::BrowserOpenTarget::DefaultBrowser => {
+            if let Err(err) = webbrowser::open(url) {
+                tracing::warn!("failed to open browser for login URL: {err}");
+            }
+        }
+        codex_utils_path::BrowserOpenTarget::Command(opener) => {
+            if let Err(err) = codex_utils_path::run_url_opener(opener, url) {
+                tracing::warn!("failed to open browser for login URL with {opener:?}: {err}");
+            }
+        }
+        codex_utils_path::BrowserOpenTarget::PrintUrl => {
+            tracing::info!("no browser opener available on Android Termux; leaving URL visible");
+        }
     }
 }
 
