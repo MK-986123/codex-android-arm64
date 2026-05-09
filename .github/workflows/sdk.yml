@@ -11,10 +11,10 @@ jobs:
       matrix:
         include:
           - runner: ubuntu-24.04
-            runs_on:
+            self_hosted_runner:
               group: codex-runners
               labels: codex-linux-x64
-    runs-on: ${{ github.repository_owner == 'openai' && matrix.runs_on || matrix.runner }}
+    runs-on: ${{ github.repository_owner == 'openai' && matrix.self_hosted_runner || matrix.runner }}
     timeout-minutes: 10
     permissions:
       contents: read
