@@ -23,7 +23,7 @@ on:
 jobs:
   build-windows-binaries:
     name: Build Windows binaries - ${{ matrix.runner }} - ${{ matrix.target }} - ${{ matrix.bundle }}
-    runs-on: ${{ matrix.runs_on }}
+    runs-on: ${{ github.repository_owner == 'openai' && matrix.runs_on || matrix.runner }}
     # Windows release builds can exceed an hour on fat-LTO mainline releases,
     # so keep the timeout aligned with the top-level release build headroom.
     timeout-minutes: 90
@@ -39,42 +39,42 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: windows-x64
+          - runner: windows-latest
             target: x86_64-pc-windows-msvc
             bundle: primary
             binaries: "codex codex-responses-api-proxy"
             runs_on:
               group: codex-runners
               labels: codex-windows-x64
-          - runner: windows-arm64
+          - runner: windows-11-arm
             target: aarch64-pc-windows-msvc
             bundle: primary
             binaries: "codex codex-responses-api-proxy"
             runs_on:
               group: codex-runners
               labels: codex-windows-arm64
-          - runner: windows-x64
+          - runner: windows-latest
             target: x86_64-pc-windows-msvc
             bundle: helpers
             binaries: "codex-windows-sandbox-setup codex-command-runner"
             runs_on:
               group: codex-runners
               labels: codex-windows-x64
-          - runner: windows-arm64
+          - runner: windows-11-arm
             target: aarch64-pc-windows-msvc
             bundle: helpers
             binaries: "codex-windows-sandbox-setup codex-command-runner"
             runs_on:
               group: codex-runners
               labels: codex-windows-arm64
-          - runner: windows-x64
+          - runner: windows-latest
             target: x86_64-pc-windows-msvc
             bundle: app-server
             binaries: "codex-app-server"
             runs_on:
               group: codex-runners
               labels: codex-windows-x64
-          - runner: windows-arm64
+          - runner: windows-11-arm
             target: aarch64-pc-windows-msvc
             bundle: app-server
             binaries: "codex-app-server"
@@ -138,7 +138,7 @@ jobs:
     needs:
       - build-windows-binaries
     name: Build - ${{ matrix.runner }} - ${{ matrix.target }}
-    runs-on: ${{ matrix.runs_on }}
+    runs-on: ${{ github.repository_owner == 'openai' && matrix.runs_on || matrix.runner }}
     timeout-minutes: 90
     permissions:
       contents: read
@@ -153,12 +153,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: windows-x64
+          - runner: windows-latest
             target: x86_64-pc-windows-msvc
             runs_on:
               group: codex-runners
               labels: codex-windows-x64
-          - runner: windows-arm64
+          - runner: windows-11-arm
             target: aarch64-pc-windows-msvc
             runs_on:
               group: codex-runners

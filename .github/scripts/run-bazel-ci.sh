@@ -314,6 +314,13 @@ if [[ -n "${BAZEL_REPOSITORY_CACHE:-}" ]]; then
   post_config_bazel_args+=("--repository_cache=${BAZEL_REPOSITORY_CACHE}")
 fi
 
+if [[ -z "${BUILDBUDDY_API_KEY:-}" ]]; then
+  # Fork/community runs do not receive the BuildBuddy secret, and Bazel 9 rejects
+  # the repo-wide remote downloader flag when gRPC cache credentials are absent.
+  # Keep local/cache-based fallbacks working by disabling the downloader override.
+  post_config_bazel_args+=(--noexperimental_remote_downloader)
+fi
+
 if [[ -n "${CODEX_BAZEL_EXECUTION_LOG_COMPACT_DIR:-}" ]]; then
   post_config_bazel_args+=(
     "--execution_log_compact_file=${CODEX_BAZEL_EXECUTION_LOG_COMPACT_DIR}/execution-log-${bazel_args[0]}-${GITHUB_JOB:-local}-$$.zst"
