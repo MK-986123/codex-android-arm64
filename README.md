@@ -115,12 +115,12 @@ just termux-install     # copy binary to $PREFIX/bin
 
 | Feature | Status |
 |---------|--------|
-| TUI / chat | ✅ Fully functional |
-| Shell execution | ✅ Runs via Termux `$SHELL` |
-| Clipboard | ✅ Termux clipboard API used automatically |
-| Sandboxing (bwrap/landlock) | ⚠️ Disabled — not available on Android |
-| Voice / audio | ⚠️ Disabled — no NDK audio in Termux |
-| IDE integration (IPC) | ✅ Works via Unix sockets |
+| TUI / chat | &#x2705; Fully functional |
+| Shell execution | &#x2705; Runs via Termux `$SHELL` |
+| Clipboard | &#x2705; Termux clipboard API used automatically |
+| Sandboxing (bwrap/landlock) | &#x26A0;&#xFE0F; Disabled &#x2014; not available on Android |
+| Voice / audio | &#x26A0;&#xFE0F; Disabled &#x2014; no NDK audio in Termux |
+| IDE integration (IPC) | &#x2705; Works via Unix sockets |
 
-Audio and sandboxing features compile as no-ops on Android — the binary functions
+Audio and sandboxing features compile as no-ops on Android &#x2014; the binary functions
 fully for all text-based agent tasks.

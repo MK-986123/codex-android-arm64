@@ -315,10 +315,14 @@ if [[ -n "${BAZEL_REPOSITORY_CACHE:-}" ]]; then
 fi
 
 if [[ -z "${BUILDBUDDY_API_KEY:-}" ]]; then
-  # Fork/community runs do not receive the BuildBuddy secret, and Bazel 9 rejects
-  # the repo-wide remote downloader flag when gRPC cache credentials are absent.
-  # Keep local/cache-based fallbacks working by disabling the downloader override.
-  post_config_bazel_args+=(--noexperimental_remote_downloader)
+  # Fork/community runs do not receive the BuildBuddy secret, and the wrapper's
+  # no-secret path clears `--remote_cache=` / `--remote_executor=` later on.
+  # Bazel 9 then requires the downloader endpoint from `.bazelrc` to be cleared
+  # as well, otherwise it errors with:
+  #   ERROR: The remote downloader can only be used in combination with gRPC caching
+  # This option takes a value, so override it with the empty string instead of a
+  # `--no...` form.
+  post_config_bazel_args+=(--experimental_remote_downloader=)
 fi
 
 if [[ -n "${CODEX_BAZEL_EXECUTION_LOG_COMPACT_DIR:-}" ]]; then

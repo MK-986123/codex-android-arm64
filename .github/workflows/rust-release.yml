@@ -273,8 +273,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          toolchain="${{ steps.android-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          ndk="${{ steps.android-ndk.outputs.ndk-path }}"
+          toolchain="${ndk}/toolchains/llvm/prebuilt/linux-x86_64/bin"
           api_level=28
+          echo "ANDROID_NDK_HOME=${ndk}" >> "$GITHUB_ENV"
           echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=${toolchain}/aarch64-linux-android${api_level}-clang" >> "$GITHUB_ENV"
           echo "CC_aarch64_linux_android=${toolchain}/aarch64-linux-android${api_level}-clang" >> "$GITHUB_ENV"
           echo "CXX_aarch64_linux_android=${toolchain}/aarch64-linux-android${api_level}-clang++" >> "$GITHUB_ENV"
